@@ -41,7 +41,7 @@ const login = () => {
     <View style={styles.container}>
     <KeyboardAvoidingView behavior='padding'>
         <TextInput style={styles.input}
-            value={email}
+            value={email} 
             placeholder="Email"
             autoCapitalize="none"
             onChangeText={(text) => setEmail(text)}
