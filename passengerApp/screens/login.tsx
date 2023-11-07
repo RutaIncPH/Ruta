@@ -1,7 +1,8 @@
 import { View, Text, TextInput, StyleSheet, ActivityIndicator, Button, KeyboardAvoidingView } from 'react-native'
 import React, { useState } from 'react'
-import { FIREBASE_AUTH } from '../firebaseConfig';
+import { FIREBASE_AUTH, FIREBASE_DB } from '../../firebaseConfig';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { addDoc, collection } from 'firebase/firestore';
 
 const login = () => {
     const [email, setEmail] = useState('');
@@ -27,11 +28,16 @@ const login = () => {
         setLoading(true);
         try {
             const response = await createUserWithEmailAndPassword(auth, email, password);
+            const db = FIREBASE_DB;
             console.log(response);
-            alert('Check your emails!');
+            await addDoc(collection(db, 'users'), {
+                email: email,
+                password: password,
+            });
+            alert('Check DB!');
         } catch (error: any) {
             console.log(error);
-            alert('Sign in failed: ' + error.message);
+            alert('Sign up failed: ' + error.message);
         } finally {
             setLoading(false);
         }

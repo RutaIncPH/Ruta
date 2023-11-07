@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator} from '@react-navigation/native-stack';
-import Login from './screens/login';
-import List from './screens/list';
-import Details from './screens/details'
-import Booking from './screens/booking';
+import Login from './passengerApp/screens/login';
+import Home from './passengerApp/screens/home';
+import Profile from './passengerApp/screens/profile';
+import Booking from './passengerApp/screens/booking';
 import { User, onAuthStateChanged } from 'firebase/auth';
 import { FIREBASE_AUTH } from './firebaseConfig';
 
@@ -15,8 +15,8 @@ const InsideStack = createNativeStackNavigator();
 function InsideLayout() {
   return (
     <InsideStack.Navigator>
-      <InsideStack.Screen name="My List" component={List} />
-      <InsideStack.Screen name="My Details" component={Details} />
+      <InsideStack.Screen name="Home" component={Home} />
+      <InsideStack.Screen name="Profile" component={Profile} />
       <InsideStack.Screen name="Booking" component={Booking} />
     </InsideStack.Navigator>
   )
