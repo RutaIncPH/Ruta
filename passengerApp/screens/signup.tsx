@@ -1,30 +1,40 @@
 import { View, TextInput, StyleSheet, ActivityIndicator, Button, KeyboardAvoidingView } from 'react-native'
-import React, { useState } from 'react'
-import { FIREBASE_AUTH } from '../../firebaseConfig';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import React, { useState} from 'react'
+import { FIREBASE_AUTH, FIREBASE_DB } from '../../firebaseConfig';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { addDoc, collection } from 'firebase/firestore';
 import { NavigationProp } from '@react-navigation/native';
-
+import Axios from 'axios';
 
 interface RouterProps {
     navigation: NavigationProp<any, any>;
 }
 
-
-const login = ({ navigation }: RouterProps) => {
+const signup = ({ navigation }: RouterProps) => {
     const [email, setEmail] = useState('');
+    const [name, setName] = useState('');
+    const [contact, setContact] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const auth = FIREBASE_AUTH;
 
-    const signIn = async () => {
+    const signUp = async () => {
         setLoading(true);
         try {
-            const response = await signInWithEmailAndPassword(auth, email, password);
+            const response = await createUserWithEmailAndPassword(auth, email, password);
+            const db = FIREBASE_DB;
             console.log(response);
-            alert('Check your emails!');
+            await addDoc(collection(db, 'users'), {
+                email: email,
+                name: name,
+                contact: contact,
+                password: password,
+            });
+            alert('Check DB!');
+            navigation.navigate('Login');
         } catch (error: any) {
             console.log(error);
-            alert('Sign in failed: ' + error.message);
+            alert('Sign up failed: ' + error.message);
         } finally {
             setLoading(false);
         }
@@ -41,6 +51,20 @@ const login = ({ navigation }: RouterProps) => {
         />
 
         <TextInput style={styles.input}
+            value={name} 
+            placeholder="Full Name"
+            autoCapitalize="none"
+            onChangeText={(text) => setName(text)}
+        />
+
+        <TextInput style={styles.input}
+            value={contact} 
+            placeholder="Contact Number"
+            autoCapitalize="none"
+            onChangeText={(text) => setContact(text)}
+        />
+
+        <TextInput style={styles.input}
             value={password}
             placeholder="Password"
             autoCapitalize="none"
@@ -51,17 +75,14 @@ const login = ({ navigation }: RouterProps) => {
         { loading ? (
             <ActivityIndicator size="large" color="#0000ff" />
         ) : (
-        <>
-            <Button title="Login" onPress= {signIn} />
-            <Button onPress={() => navigation.navigate('Signup')} title="Don't have an account?" />
-        </>
+        <><Button title="Create Account" onPress={signUp} /><Button onPress={() => navigation.navigate('Login')} title="Go Back" /></>
         )}
     </KeyboardAvoidingView>
     </View>
-  );
-};
+  )
+}
 
-export default login;
+export default signup;
 
 const styles = StyleSheet.create({
     container: {

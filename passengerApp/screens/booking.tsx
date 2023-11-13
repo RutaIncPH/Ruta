@@ -5,6 +5,8 @@ import { GooglePlaceDetail, GooglePlacesAutocomplete } from 'react-native-google
 import { GOOGLE_API_KEY } from '../../environments';
 import Constants from 'expo-constants';
 import MapViewDirections from 'react-native-maps-directions';
+import axios from 'axios';
+import { response } from 'express';
 
 const { width, height } = Dimensions.get("window");
 
@@ -82,8 +84,14 @@ export default function App() {
     }
   };
 
-  const traceRoute = () => {
+  const traceRoute = async() => {
     if (origin && destination) {
+      try {
+        const response = await axios.post('http://192.168.254.100:3000/book', {origin, destination});
+      }
+      catch(error) {        
+        console.log(error);
+      }
       setShowDirections(true);
       mapRef.current?.fitToCoordinates([origin, destination], { edgePadding });
     }
