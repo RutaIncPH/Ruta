@@ -6,7 +6,9 @@ import { GOOGLE_API_KEY } from '../../environments';
 import Constants from 'expo-constants';
 import MapViewDirections from 'react-native-maps-directions';
 import axios from 'axios';
-import { response } from 'express';
+import io from 'socket.io-client';
+import { FIREBASE_AUTH } from '../../firebaseConfig';
+
 
 const { width, height } = Dimensions.get("window");
 
@@ -43,8 +45,10 @@ function InputAutocomplete({
         }}
         query={{
           key: GOOGLE_API_KEY,
-          language: "pt-BR",
+          language: "en",
+          components: 'country:ph',
         }}
+        
       />
     </>
   );
@@ -54,6 +58,7 @@ export default function App() {
   const [origin, setOrigin] = useState<LatLng | null>();
   const [destination, setDestination] = useState<LatLng | null>();
   const [showDirections, setShowDirections] = useState(false);
+  const [title] = useState(0);
   const [distance, setDistance] = useState(0);
   const [duration, setDuration] = useState(0);
   const mapRef = useRef<MapView>(null);
@@ -84,30 +89,70 @@ export default function App() {
     }
   };
 
-  const traceRoute = async() => {
-    if (origin && destination) {
+  const user = FIREBASE_AUTH; // Replace with the appropriate method to get user details
+
+  const traceRoute = async () => {
+  
+    if (origin && destination && user && user.currentUser) {
       try {
-        const response = await axios.post('http://192.168.254.100:3000/book', {origin, destination});
-      }
-      catch(error) {        
+        const uid = user.currentUser.uid;
+  
+        // Fetch user details from your backend
+        const userResponse = await axios.get(`http://192.168.254.101:3000/api/user/${uid}`);
+  
+        if (userResponse.data) {
+          const { name, contact } = userResponse.data;
+  
+          const payload = {
+            origin,
+            destination,
+            title,
+            passenger: {
+              uid,
+              name,
+              contact,
+            },
+            distance: distance,
+          };
+  
+          
+          const response = await axios.post('http://192.168.254.101:3000/book', payload);
+          
+  
+          const socket = io('http://192.168.254.101:3000');
+          socket.emit('locationUpdate', payload);
+          socket.close();
+        } else {
+          console.log('User not found',);
+        }
+      } catch (error) {
         console.log(error);
       }
       setShowDirections(true);
       mapRef.current?.fitToCoordinates([origin, destination], { edgePadding });
+      console.log("Origin:",origin,"Destination:",destination);
+    } else {
+      console.log('Invalid Input Data');
     }
   };
+  
 
   const onPlaceSelected = (
     details: GooglePlaceDetail | null,
     flag: "origin" | "destination"
   ) => {
     const set = flag === "origin" ? setOrigin : setDestination;
-    const position = {
-      latitude: details?.geometry.location.lat || 0,
-      longitude: details?.geometry.location.lng || 0,
+  
+    if (details) {
+      const position = {
+        latitude: details.geometry.location.lat,
+        longitude: details.geometry.location.lng,
+        title: [details.name,details.formatted_address],
+      };
+
+      set(position);
+      moveTo(position);
     };
-    set(position);
-    moveTo(position);
   };
   return (
     <View style={styles.container}>
@@ -144,7 +189,7 @@ export default function App() {
           }}
         />
         <TouchableOpacity style={styles.button} onPress={traceRoute}>
-          <Text style={styles.buttonText}>Trace Route</Text>
+          <Text style={styles.buttonText}>Book</Text>
         </TouchableOpacity>
         {distance && duration ? (
           <View>
@@ -179,7 +224,7 @@ const styles = StyleSheet.create({
     elevation: 4,
     padding: 8,
     borderRadius: 8,
-    bottom: Constants.statusBarHeight,
+    top: Constants.statusBarHeight,
   },
   input: {
     borderColor: "#888",
@@ -195,3 +240,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 });
+
+
+
+
+

@@ -1,10 +1,9 @@
 import { View, TextInput, StyleSheet, ActivityIndicator, Button, KeyboardAvoidingView } from 'react-native'
 import React, { useState} from 'react'
-import { FIREBASE_AUTH, FIREBASE_DB } from '../../firebaseConfig';
+import { FIREBASE_AUTH } from '../../firebaseConfig';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { addDoc, collection } from 'firebase/firestore';
 import { NavigationProp } from '@react-navigation/native';
-import Axios from 'axios';
+import axios from 'axios';
 
 interface RouterProps {
     navigation: NavigationProp<any, any>;
@@ -21,19 +20,21 @@ const signup = ({ navigation }: RouterProps) => {
     const signUp = async () => {
         setLoading(true);
         try {
-            const response = await createUserWithEmailAndPassword(auth, email, password);
-            const db = FIREBASE_DB;
-            console.log(response);
-            await addDoc(collection(db, 'users'), {
-                email: email,
-                name: name,
-                contact: contact,
-                password: password,
-            });
-            alert('Check DB!');
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const uid = userCredential.user.uid;
+
+            console.log(userCredential);
+            const response = await axios.post('http://192.168.254.101:3000/api/users', {
+                uid,
+                email,
+                name,
+                contact,
+              });
+            console.log(response.data);
+            alert('Registered Successfully!');
             navigation.navigate('Login');
         } catch (error: any) {
-            console.log(error);
+            console.error('Sign up failed:', error.message);
             alert('Sign up failed: ' + error.message);
         } finally {
             setLoading(false);

@@ -19,6 +19,7 @@ function InsideLayout() {
       <InsideStack.Screen name="Home" component={Home} />
       <InsideStack.Screen name="Profile" component={Profile} />
       <InsideStack.Screen name="Booking" component={Booking} />
+      <InsideStack.Screen name="Login" component={Login} />
       <InsideStack.Screen name="Signup" component={Signup} />
     </InsideStack.Navigator>
   )
