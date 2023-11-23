@@ -1,15 +1,16 @@
 import { View, TextInput, StyleSheet, ActivityIndicator, Button, KeyboardAvoidingView } from 'react-native'
 import React, { useState } from 'react'
 import { FIREBASE_AUTH } from '../../firebaseConfig';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, getAuth } from 'firebase/auth';
 import { NavigationProp } from '@react-navigation/native';
-
+import { io } from 'socket.io-client'; // Import the io function
 
 interface RouterProps {
     navigation: NavigationProp<any, any>;
 }
 
-
+const auth = getAuth();
+const socket = io('http://172.20.10.2:3000');
 const login = ({ navigation }: RouterProps) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -21,6 +22,15 @@ const login = ({ navigation }: RouterProps) => {
         try {
             const response = await signInWithEmailAndPassword(auth, email, password);
             console.log(response);
+    
+            // After successful login, get the ID token
+            const user = response.user;
+            const idToken = await user.getIdToken();
+    
+            // Emit the user_login event with the Firebase ID token
+            socket.emit('user_login', { idToken });
+            console.log(idToken);
+    
             alert('Check your emails!');
         } catch (error: any) {
             console.log(error);

@@ -24,7 +24,7 @@ const signup = ({ navigation }: RouterProps) => {
             const uid = userCredential.user.uid;
 
             console.log(userCredential);
-            const response = await axios.post('http://192.168.254.101:3000/api/users', {
+            const response = await axios.post('http://172.20.10.2:3000/api/users', {
                 uid,
                 email,
                 name,
