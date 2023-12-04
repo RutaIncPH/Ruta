@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { ImageBackground } from 'react-native'
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator} from '@react-navigation/native-stack';
 import Login from './passengerApp/screens/login';
@@ -35,18 +36,19 @@ export default function App() {
       setUser(user);
     });
   })
+
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
-        {user ? (
-          <Stack.Screen name="Inside" component={InsideLayout} options={{ headerShown: false }} />
-        ) : (
-          <>
-            <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
-            <Stack.Screen name="Signup" component={Signup} options={{ headerShown: false }} />
-          </>
-        )}
-      </Stack.Navigator>
+        <Stack.Navigator initialRouteName="Login">
+          {user ? (
+            <Stack.Screen name="Inside" component={InsideLayout} options={{ headerShown: false }} />
+          ) : (
+            <>
+              <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
+              <Stack.Screen name="Signup" component={Signup} options={{ headerShown: false }} />
+            </>
+          )}
+        </Stack.Navigator>
     </NavigationContainer>
   );
 }
