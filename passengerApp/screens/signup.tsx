@@ -1,9 +1,11 @@
-import { View, TextInput, StyleSheet, ActivityIndicator, Button, KeyboardAvoidingView } from 'react-native'
+import { View, TextInput, StyleSheet, ActivityIndicator, KeyboardAvoidingView, ImageBackground } from 'react-native'
 import React, { useState} from 'react'
 import { FIREBASE_AUTH } from '../../firebaseConfig';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { NavigationProp } from '@react-navigation/native';
 import axios from 'axios';
+import { Button } from 'react-native-paper';
+
 
 interface RouterProps {
     navigation: NavigationProp<any, any>;
@@ -24,7 +26,7 @@ const signup = ({ navigation }: RouterProps) => {
             const uid = userCredential.user.uid;
 
             console.log(userCredential);
-            const response = await axios.post('http://172.20.10.2:3000/api/users', {
+            const response = await axios.post('http://192.168.88.243:3000/api/users', {
                 uid,
                 email,
                 name,
@@ -42,6 +44,7 @@ const signup = ({ navigation }: RouterProps) => {
     }
 
   return (
+    <ImageBackground source={require('./bg.jpg')} resizeMode='cover' style={styles.image}>
     <View style={styles.container}>
     <KeyboardAvoidingView behavior='padding'>
         <TextInput style={styles.input}
@@ -76,20 +79,26 @@ const signup = ({ navigation }: RouterProps) => {
         { loading ? (
             <ActivityIndicator size="large" color="#0000ff" />
         ) : (
-        <><Button title="Create Account" onPress={signUp} /><Button onPress={() => navigation.navigate('Login')} title="Go Back" /></>
+        <><Button onPress={signUp} style={styles.button} mode="contained" buttonColor='#ff7b00'>Create Account</Button>
+        <Button onPress={() => navigation.navigate('Welcome')} style={styles.button} textColor='#fff'>Back</Button></>
         )}
     </KeyboardAvoidingView>
     </View>
+    </ImageBackground>
   )
 }
 
 export default signup;
 
 const styles = StyleSheet.create({
-    container: {
-        marginHorizontal: 20,
+    image: {
         flex: 1,
-        justifyContent: 'center'
+    },
+    container: {
+        paddingHorizontal: 45,
+        flex: 1,
+        justifyContent: 'center',
+        backgroundColor:'rgba(0,0,0,0.8)',
     },
     input: {
         marginVertical: 4,
@@ -97,6 +106,11 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderRadius: 4,
         padding: 10,
-        backgroundColor: '#fff'
-    }
+        backgroundColor: '#fff',
+        textAlign: 'center',
+    },
+    button: {
+        marginTop: 10,
+        borderRadius: 4,
+    },
 })

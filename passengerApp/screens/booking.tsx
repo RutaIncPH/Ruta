@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import MapView, {LatLng, Marker, PROVIDER_GOOGLE} from 'react-native-maps';
-import { StyleSheet, Text, View, Dimensions, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, Dimensions, Image } from 'react-native';
 import { GooglePlaceDetail, GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { GOOGLE_API_KEY } from '../../environments';
 import Constants from 'expo-constants';
@@ -9,9 +9,60 @@ import axios from 'axios';
 import io from 'socket.io-client';
 import { FIREBASE_AUTH } from '../../firebaseConfig';
 import { ActivityIndicator, MD2Colors, Button } from 'react-native-paper';
-import { v4 as uuidv4 } from 'uuid';
 import { signInWithEmailAndPassword, getAuth } from 'firebase/auth';
-import { red400 } from 'react-native-paper/lib/typescript/styles/themes/v2/colors';
+
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  map: {
+    width: Dimensions.get("window").width,
+    height: Dimensions.get("window").height,
+  },
+  searchContainer: {
+    position: "absolute",
+    width: "95%",
+    backgroundColor: "#515151",
+    shadowColor: "black",
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 4,
+    padding: 8,
+    borderRadius: 8,
+    bottom: 25,
+  },
+  input: {
+    borderColor: "#6B4EAA",
+    borderWidth: 1,
+  },
+  button: {
+    marginVertical: 10,
+    borderRadius: 4,
+  },
+  buttonText: {
+    textAlign: "center",
+  },
+  label: {
+    fontSize: 18,
+    marginBottom: 3,
+    color: '#fff',
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  caption: {
+    color: '#fff',
+    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: '500'
+  }
+});
 
 
 const user = FIREBASE_AUTH;
@@ -37,7 +88,7 @@ const handleLogin = async (email, password) => {
     const idToken = await user.getIdToken();
 
     // Emit the user_login event to the server
-    const socket = io('http://192.168.254.101:3000');
+    const socket = io('http://192.168.88.243:3000');
     socket.emit('user_login', { idToken });
   } catch (error) {
   }
@@ -85,18 +136,18 @@ const App = React.memo(() => {
   const mapRef = useRef<MapView>(null);
   const [uid] = useState(0);
   const [bookingStatus, setBookingStatus] = useState('');
-  const [bookingId, setBookingId] = useState<string>(''); // Assuming bookingId is a string
+  const [bookingId, setBookingId] = useState<string>('');
   
   function generateBookingID() {
     const timestamp = new Date().getTime().toString(36);
-    const random = Math.random().toString(36).substr(2, 5); // Adjust the length as needed
+    const random = Math.random().toString(36).substr(2, 5);
     const bookingID = `${timestamp}-${random}`;
     setBookingId(bookingID);
     return bookingID;
   }
   
   useEffect(() => {
-    const socket = io('http://192.168.254.101:3000');
+    const socket = io('http://192.168.88.243:3000');
     
     socket.on('connect', () => {
       console.log('Connected to the server!');
@@ -107,15 +158,13 @@ const App = React.memo(() => {
       console.log('Received booking update:', data);
   
       if (bookingId === data.bookingId) {
-        // Handle different booking status scenarios
         if (data.status === 'Accepted') {
           setBookingStatus('Accepted');
           console.log('Booking has been accepted!');
         } else if (data.status === 'Rejected') {
+          setBookingStatus('Rejected');
           console.log('Booking has been rejected');
-          // You can handle rejection scenarios here
         } else if (data.status === 'InProgress') {
-          // You can handle in-progress scenarios here
         } else {
           console.error('Invalid booking update:', data);
         }
@@ -147,11 +196,17 @@ const App = React.memo(() => {
 
   const traceRouteOnReady = (args: any) => {
     if (args) {
-      // args.distance
-      // args.duration
       setDistance(args.distance);
       setDuration(args.duration);
     }
+  };
+
+  const cancelBooking = () => {
+    setBookingStatus('');
+
+    // Emit a socket event to inform the server about the cancellation
+    const socket = io('http://192.168.88.243:3000');
+    socket.emit('cancel_booking', { bookingId });
   };
 
   const traceRoute = async () => {
@@ -159,11 +214,10 @@ const App = React.memo(() => {
       try {
         const uid = user.currentUser.uid;
         const bookingId = generateBookingID();
-        const userResponse = await axios.get(`http://192.168.254.101:3000/api/user/${uid}`);
+        const userResponse = await axios.get(`http://192.168.88.243:3000/api/user/${uid}`);
   
         if (userResponse.data) {
           const { uid, name, contact } = userResponse.data;
-  
           const payload = {
             origin,
             destination,
@@ -181,9 +235,9 @@ const App = React.memo(() => {
           setBookingStatus('Pending');
           console.log(bookingStatus);
 
-          const response = await axios.post('http://192.168.254.101:3000/book', payload);
+          const response = await axios.post('http://192.168.88.243:3000/book', payload);
           
-          const socket = io('http://192.168.254.101:3000');
+          const socket = io('http://192.168.88.243:3000');
           socket.emit('locationUpdate', payload);          
         } else {
           console.log('User not found',);
@@ -218,7 +272,7 @@ const App = React.memo(() => {
       moveTo(position);
     };
   };
-return (
+  return (
     <View style={styles.container}>
       <MapView
         ref={mapRef}
@@ -239,9 +293,9 @@ return (
           />
         )}
       </MapView>
-
-
-      <View style={styles.searchContainer}>
+  
+      {bookingStatus === '' && (
+        <View style={styles.searchContainer}>
           <>
             <InputAutocomplete
               label="Origin"
@@ -255,81 +309,51 @@ return (
                 onPlaceSelected(details, "destination");
               }}
             />
-            <Button style={styles.button} icon="bicycle-cargo" mode="contained" onPress={traceRoute}>
+            <Button style={styles.button} icon="bicycle-cargo" mode="contained" onPress={traceRoute} buttonColor='#ff7b00'>
               Book
             </Button>
+  
+            {distance && duration ? (
+              <View>
+                <Text><Text style={styles.title}>Distance:</Text> {distance.toFixed(2)}</Text>
+                <Text><Text style={styles.title}>Duration:</Text> {Math.ceil(duration)} min</Text>
+              </View>
+            ) : null}
           </>
+        </View>
+      )}
+  
+      {bookingStatus === 'Pending' && (
+        <View style={styles.searchContainer}>
+           {/* Hello World<ActivityIndicator animating={true} color={MD2Colors.orange800} size={'large'} />*/}
+          <Image source={{uri: "https://media.giphy.com/media/Y0G6gc8CJu1ynAZ1nr/giphy.gif"}} style={{ width: 200, height: 200, alignSelf: 'center', margin: 10}}></Image>
+          <Text style={styles.caption}>Looking for a Driver</Text>
+          <Text style={styles.caption}>Please be patient as we are a new app</Text>
+          <Button style={styles.button} icon="bicycle-cargo" mode="contained" onPress={cancelBooking} buttonColor='#ff7b00'>
+              Cancel
+          </Button>
+        </View>
+      )}
+  
+      {bookingStatus === 'Accepted' && (
+        <View style={styles.searchContainer}>
+          <Image source={{uri: "https://media.giphy.com/media/OZYQY0GnfHLW0/giphy.gif"}} style={{ width: 200, height: 200, alignSelf: 'center', margin: 10}}></Image>
+          <Text style={styles.caption}>Booking has been Accepted! Operator is on the way!</Text>
+          <Button style={styles.button} icon="bicycle-cargo" mode="contained" onPress={cancelBooking} buttonColor='#ff7b00'>
+              Cancel
+          </Button>
+        </View>
+      )}
 
-        {distance && duration ? (  
-          <View>
-            <Text><Text style={styles.title}>Distance:</Text> {distance.toFixed(2)}</Text>
-            <Text><Text style={styles.title}>Duration:</Text> {Math.ceil(duration)} min</Text>
-          </View>
-        ) : null}
-          
-          {bookingStatus === 'Pending' && (
-            <View>
-              <ActivityIndicator animating={true} color={MD2Colors.purple300} size={'large'} />
-              <Text>Looking for Driver...</Text>
-            </View>
-          )}
-          
-          {bookingStatus === 'Accepted' && (
-          <View>
-            <Text>Booking has been accepted! Driver is on the way!</Text>
-          </View>
-          )}
-      </View>
+      {bookingStatus === 'Rejected' && (
+        <View style={styles.searchContainer}>
+          <Text>Booking has been Rejected. Sorry for the inconvenience.</Text>
+          <Button style={styles.button} icon="bicycle-cargo" mode="contained" onPress={cancelBooking} buttonColor='#ff7b00'>
+              Book again
+          </Button>
+        </View>
+      )}
     </View>
-  );
+  );   
 });
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  map: {
-    width: Dimensions.get("window").width,
-    height: Dimensions.get("window").height,
-  },
-  searchContainer: {
-    position: "absolute",
-    width: "90%",
-    backgroundColor: "white",
-    shadowColor: "black",
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 0.5,
-    shadowRadius: 4,
-    elevation: 4,
-    padding: 8,
-    borderRadius: 8,
-    top: Constants.statusBarHeight,
-  },
-  input: {
-    borderColor: "#6B4EAA",
-    borderWidth: 2,
-  },
-  button: {
-    marginVertical: 10,
-  },
-  buttonText: {
-    textAlign: "center",
-  },
-  label: {
-    fontSize: 18,
-    marginBottom: 3,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '700',
-  }
-});
-
 export default App;
-
-
-
-

@@ -4,7 +4,7 @@ import { FIREBASE_AUTH } from '../../firebaseConfig';
 import { signInWithEmailAndPassword, getAuth } from 'firebase/auth';
 import { NavigationProp } from '@react-navigation/native';
 import { io } from 'socket.io-client'; // Import the io function
-import { ActivityIndicator, MD2Colors, Button } from 'react-native-paper';
+import { ActivityIndicator, Button } from 'react-native-paper';
 
 
 interface RouterProps {
@@ -12,7 +12,7 @@ interface RouterProps {
 }
 
 const auth = getAuth();
-const socket = io('http://172.20.10.2:3000');
+const socket = io('http://192.168.88.243:3000');
 const login = ({ navigation }: RouterProps) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -41,10 +41,9 @@ const login = ({ navigation }: RouterProps) => {
             setLoading(false);
         }
     }
-    const image = {uri: 'https://images.unsplash.com/photo-1596789592210-e2e93ff08bc4?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'};
 
     return (
-    <ImageBackground source={image} resizeMode='cover' style={styles.image}>
+    <ImageBackground source={require('./bg.jpg')} resizeMode='cover' style={styles.image}>
         <View style={styles.container}>
         <KeyboardAvoidingView behavior='padding' style={styles.form}>
             <TextInput style={styles.input}
@@ -65,11 +64,11 @@ const login = ({ navigation }: RouterProps) => {
             <ActivityIndicator size="large" color="#0000ff" />
         ) : (
         <>
-            <Button mode="contained" icon="login" onPress= {signIn}>
+            <Button mode="contained" icon="login" onPress= {signIn} buttonColor='#ff7b00' style={styles.button}>
                 Login
             </Button>
-            <Button onPress={() => navigation.navigate('Signup')}>
-                Don't have an account?
+            <Button onPress={() => navigation.navigate('Welcome')} style={styles.button} textColor='#fff'>
+                Back
             </Button>
         </>
         )}
@@ -91,11 +90,11 @@ const styles = StyleSheet.create({
     input: {
         marginVertical: 4,
         height: 50,
-        borderWidth: 1,
-        borderRadius: 35,
+        borderRadius: 4,
         paddingHorizontal: 20,
         paddingVertical: 10,
-        backgroundColor: '#fff'
+        backgroundColor: '#fff',
+        textAlign: 'center',
     },
     image: {
         flex: 1,
@@ -103,7 +102,8 @@ const styles = StyleSheet.create({
         tintColor: '#fff',
     },
     button: {
-        fontSize: 12,
+        borderRadius: 4,
+        marginTop: 10,
     }
 })
 

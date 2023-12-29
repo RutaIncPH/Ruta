@@ -1,48 +1,105 @@
-import { View, Text, Button } from 'react-native';
 import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TextInput, ImageBackground } from 'react-native';
+import { Button } from 'react-native-paper';
 import { NavigationProp } from '@react-navigation/native';
-import { FIREBASE_DB } from '../../firebaseConfig';
-import { collection, getDocs } from 'firebase/firestore';
+import { FIREBASE_AUTH } from '../../firebaseConfig';
 
 interface RouterProps {
-    navigation: NavigationProp<any, any>;
+  navigation: NavigationProp<any, any>;
 }
 
-const profile = ({ navigation }: RouterProps) => {
-    const [userData, setUserData] = useState(null);
+const user = FIREBASE_AUTH;
 
-    useEffect(() => {
-        const fetchUserData = async () => {
-            const db = FIREBASE_DB;
-            const usersRef = collection(db, 'users');
-            const querySnapshot = await getDocs(usersRef);
-            querySnapshot.forEach((doc) => {
-                if (doc.exists) {
-                    // Assuming you have a userId to identify the specific user
-                    if (doc.data().email === userData.email) {
-                        setUserData(doc.data());
-                    }
-                } else {
-                    console.log('No such document!');
-                }
-            });
-        };
-        fetchUserData();
-    }, []);
+const Profile: React.FC<RouterProps> = ({ navigation }) => {
+  const [userData, setUserData] = useState<any>(null);
 
-    return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            {userData ? (
-                <View>
-                    <Text>Email: {userData.email}</Text>
-                    <Text>Full Name: {userData.password}</Text>
-                </View>
-            ) : (
-                <Text>Loading...</Text>
-            )}
-            <Button onPress={() => navigation.goBack()} title="Go Back" />
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        // Assuming you have a method to get the user UID (replace 'getUserUid' with your actual method)
+        const userUid = user.currentUser.uid; // Replace with your actual method to get the user UID
+        if (!userUid) {
+          console.error('User UID not available');
+          return;
+        }
+
+        const response = await fetch(`http://192.168.88.243:3000/api/user/${userUid}`);
+        const data = await response.json();
+        setUserData(data);
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    fetchUserData();
+  }, []); 
+
+
+
+  return (
+    <ImageBackground source={require('./bg.jpg')} resizeMode='cover' style={styles.image}>
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor:'rgba(0,0,0,0.8)'}}>
+      {userData ? (
+        <View>
+            <TextInput
+                editable={false}
+                maxLength={40}
+                value={'Full Name: ' + userData.name}
+                style={styles.form}
+            />
+            <TextInput
+                editable={false}
+                maxLength={40}
+                value={'Email: ' + userData.email}
+                style={styles.form}
+            />
+                        <TextInput
+                editable={false}
+                maxLength={40}
+                value={'Contact Number: ' + userData.contact}
+                style={styles.form}
+            />
+          <Button
+            style={styles.logout}
+            icon="logout"
+            mode="contained"
+            onPress={() => FIREBASE_AUTH.signOut()}
+          >
+            Logout
+          </Button>
         </View>
-    );
+      ) : (
+        <Button
+          style={styles.logout}
+          icon="logout"
+          mode="contained"
+          onPress={() => FIREBASE_AUTH.signOut()}
+        >
+          Logout
+        </Button>
+      )}
+    </View>
+    </ImageBackground>
+  );
 };
 
-export default profile;
+export default Profile;
+
+const styles = StyleSheet.create({
+  image: {
+    flex: 1,
+  },
+  logout: {
+    marginTop: 45,
+    backgroundColor: '#aaaaaa',
+  },
+  form: {
+    marginVertical: 4,
+    height: 50,
+    borderWidth: 1,
+    borderRadius: 4,
+    padding: 10,
+    backgroundColor: '#fff',
+    textAlign: 'center',
+  }
+});

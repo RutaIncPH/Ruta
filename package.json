@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@react-native-mapbox-gl/maps": "^8.6.0-beta.0",
+    "@react-navigation/bottom-tabs": "^6.5.11",
     "@react-navigation/native": "^6.1.9",
     "@react-navigation/native-stack": "^6.9.17",
     "@react-navigation/stack": "^6.3.20",
@@ -23,6 +24,7 @@
     "firebase": "^10.5.2",
     "firebase-admin": "^11.11.0",
     "mapbox-gl": "^2.15.0",
+    "mysql": "^2.18.1",
     "mysql2": "^3.6.3",
     "react": "18.2.0",
     "react-map-gl": "^7.1.6",
